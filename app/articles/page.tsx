@@ -8,6 +8,7 @@ import Input from '@/app/components/ui/Input';
 import Card, { CardBody } from '@/app/components/ui/Card';
 import Badge from '@/app/components/ui/Badge';
 import { CardSkeleton } from '@/app/components/ui/Skeleton';
+import { useI18n } from '@/app/components/I18nProvider';
 
 interface Article {
   _id: string;
@@ -26,6 +27,7 @@ export default function Articles() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+  const { t, formatDate, formatResultsLabel, translateError } = useI18n();
 
   useEffect(() => {
     async function loadArticles() {
@@ -42,14 +44,14 @@ export default function Articles() {
         setArticles(data);
         setFilteredArticles(data);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? translateError(err.message) : t('common.unknownError'));
       } finally {
         setLoading(false);
       }
     }
 
     loadArticles();
-  }, []);
+  }, [t, translateError]);
 
   useEffect(() => {
     let result = articles;
@@ -78,16 +80,16 @@ export default function Articles() {
       <section className="glass-panel rounded-[32px] px-6 py-8 sm:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl space-y-3">
-            <span className="eyebrow">Article feed</span>
+            <span className="eyebrow">{t('articles.eyebrow')}</span>
             <h1 className="section-title text-4xl font-bold tracking-[-0.05em] text-[color:var(--ink)] sm:text-5xl">
-              Discover fresh stories from the community.
+              {t('articles.title')}
             </h1>
             <p className="text-base leading-8 text-[color:var(--muted)] sm:text-lg">
-              Search, filter, and explore articles in a cleaner magazine-style feed.
+              {t('articles.description')}
             </p>
           </div>
           <Link href="/create-article">
-            <Button size="lg">Publish Article</Button>
+            <Button size="lg">{t('articles.publishArticle')}</Button>
           </Link>
         </div>
       </section>
@@ -96,21 +98,21 @@ export default function Articles() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
           <Input
             type="text"
-            placeholder="Search by title, author, or content"
+            placeholder={t('articles.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1"
           />
           <div className="flex items-center gap-2">
             <Button variant={sortBy === 'newest' ? 'primary' : 'outline'} size="sm" onClick={() => setSortBy('newest')}>
-              Newest
+              {t('articles.newest')}
             </Button>
             <Button variant={sortBy === 'oldest' ? 'primary' : 'outline'} size="sm" onClick={() => setSortBy('oldest')}>
-              Oldest
+              {t('articles.oldest')}
             </Button>
           </div>
           <div className="rounded-full border border-[color:var(--line)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
-            {filteredArticles.length} result{filteredArticles.length === 1 ? '' : 's'}
+            {formatResultsLabel(filteredArticles.length)}
           </div>
         </div>
       </section>
@@ -145,7 +147,7 @@ export default function Articles() {
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center px-8 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
-                      Editorial cover
+                      {t('articles.editorialCover')}
                     </div>
                   )}
                 </div>
@@ -165,7 +167,7 @@ export default function Articles() {
                   </div>
                   <div className="mt-auto flex items-center justify-between border-t border-[color:var(--line)] pt-4 text-sm text-[color:var(--muted)]">
                     <span>{article.author.name}</span>
-                    <span>{new Date(article.createdAt).toLocaleDateString()}</span>
+                    <span>{formatDate(article.createdAt)}</span>
                   </div>
                 </CardBody>
               </Card>
@@ -177,12 +179,12 @@ export default function Articles() {
       {!loading && filteredArticles.length === 0 && !error ? (
         <Card hover={false}>
           <CardBody className="py-14 text-center">
-            <h2 className="section-title text-3xl font-bold text-[color:var(--ink)]">No articles matched your search.</h2>
+            <h2 className="section-title text-3xl font-bold text-[color:var(--ink)]">{t('articles.noResultsTitle')}</h2>
             <p className="mx-auto mt-3 max-w-xl text-[color:var(--muted)]">
-              Try a different keyword or publish the first story for this topic.
+              {t('articles.noResultsDescription')}
             </p>
             <Link href="/create-article" className="mt-6 inline-block">
-              <Button>Create the First One</Button>
+              <Button>{t('articles.createFirst')}</Button>
             </Link>
           </CardBody>
         </Card>

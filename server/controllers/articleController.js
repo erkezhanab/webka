@@ -1,72 +1,160 @@
-const Article = require('../models/article');
 const slugify = require('slugify');
+const { sendError, sendSuccess } = require('../utils/http');
+const { createId, getArticles, getUsers, saveArticles } = require('../data/store');
+
+const allowedCategories = ['Tech', 'Design', 'News'];
+
+function validateArticleInput({ title, content, category }) {
+  if (!title || title.trim().length < 5) {
+    return 'Заголовок должен содержать минимум 5 символов';
+  }
+
+  const plainTextContent = String(content || '').replace(/<[^>]+>/g, '').trim();
+  if (plainTextContent.length < 20) {
+    return 'Содержимое статьи должно содержать минимум 20 символов';
+  }
+
+  if (!category || !allowedCategories.includes(category)) {
+    return 'Выберите корректную категорию статьи';
+  }
+
+  return null;
+}
+
+function attachAuthor(article, users) {
+  const author = users.find((user) => user._id === article.authorId);
+
+  return {
+    ...article,
+    author: author
+      ? {
+          _id: author._id,
+          id: author._id,
+          name: author.name,
+          role: author.role,
+        }
+      : { name: 'Unknown author' },
+  };
+}
 
 const getAll = async (req, res) => {
   const { search, category } = req.query;
-  const filter = { };
-  if (search) filter.title = { $regex: search, $options: 'i' };
-  if (category) filter.category = category;
+  const [articles, users] = await Promise.all([getArticles(), getUsers()]);
 
-  const articles = await Article.find(filter).populate('author', 'name role').sort({ createdAt: -1 });
-  res.json(articles);
+  let result = [...articles];
+
+  if (search) {
+    const query = String(search).toLowerCase();
+    result = result.filter((article) => {
+      return article.title.toLowerCase().includes(query) || article.category.toLowerCase().includes(query);
+    });
+  }
+
+  if (category && allowedCategories.includes(category)) {
+    result = result.filter((article) => article.category === category);
+  }
+
+  result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return sendSuccess(res, 200, result.map((article) => attachAuthor(article, users)));
 };
 
 const getById = async (req, res) => {
-  const article = await Article.findById(req.params.id).populate('author', 'name role');
-  if (!article) return res.status(404).json({ error: 'Article not found' });
-  res.json(article);
+  const [articles, users] = await Promise.all([getArticles(), getUsers()]);
+  const article = articles.find((item) => item._id === req.params.id);
+  if (!article) return sendError(res, 404, 'ARTICLE_NOT_FOUND', 'Статья не найдена');
+  return sendSuccess(res, 200, attachAuthor(article, users));
 };
 
 const create = async (req, res) => {
   const { title, content, category, featured_image } = req.body;
-  if (!title || !content || !category) return res.status(400).json({ error: 'Required fields missing' });
+  const validationError = validateArticleInput({ title, content, category });
+  if (validationError) return sendError(res, 400, 'VALIDATION_ERROR', validationError);
+
+  if (featured_image && !/^https?:\/\/.+/i.test(featured_image)) {
+    return sendError(res, 400, 'VALIDATION_ERROR', 'Изображение должно быть корректным URL');
+  }
 
   const slug = slugify(title, { lower: true, strict: true });
-  const exists = await Article.findOne({ slug });
-  if (exists) return res.status(409).json({ error: 'Article slug already exists' });
+  const articles = await getArticles();
+  const exists = articles.find((article) => article.slug === slug);
+  if (exists) return sendError(res, 409, 'ARTICLE_EXISTS', 'Статья с таким заголовком уже существует');
 
-  const article = await Article.create({
-    title,
+  const now = new Date().toISOString();
+  const article = {
+    _id: createId(),
+    title: title.trim(),
     slug,
     content,
     category,
     featured_image: featured_image || '',
-    author: req.user.id,
-  });
+    authorId: req.user.id,
+    createdAt: now,
+    updatedAt: now,
+  };
 
-  res.status(201).json(article);
+  articles.push(article);
+  await saveArticles(articles);
+
+  return sendSuccess(res, 201, article);
 };
 
 const update = async (req, res) => {
-  const article = await Article.findById(req.params.id);
-  if (!article) return res.status(404).json({ error: 'Article not found' });
+  const articles = await getArticles();
+  const article = articles.find((item) => item._id === req.params.id);
+  if (!article) return sendError(res, 404, 'ARTICLE_NOT_FOUND', 'Статья не найдена');
 
-  if (req.user.role !== 'admin' && article.author.toString() !== req.user.id) {
-    return res.status(403).json({ error: 'No permission to edit this article' });
+  if (req.user.role !== 'admin' && article.authorId !== req.user.id) {
+    return sendError(res, 403, 'FORBIDDEN', 'Нельзя редактировать чужую статью');
   }
 
   const { title, content, category, featured_image } = req.body;
-  if (title) article.title = title;
+  const nextTitle = title ?? article.title;
+  const nextContent = content ?? article.content;
+  const nextCategory = category ?? article.category;
+  const validationError = validateArticleInput({
+    title: nextTitle,
+    content: nextContent,
+    category: nextCategory,
+  });
+
+  if (validationError) return sendError(res, 400, 'VALIDATION_ERROR', validationError);
+
+  if (featured_image && !/^https?:\/\/.+/i.test(featured_image)) {
+    return sendError(res, 400, 'VALIDATION_ERROR', 'Изображение должно быть корректным URL');
+  }
+
+  if (title) article.title = title.trim();
   if (content) article.content = content;
   if (category) article.category = category;
-  if (featured_image) article.featured_image = featured_image;
+  if (featured_image !== undefined) article.featured_image = featured_image;
 
-  if (title) article.slug = slugify(title, { lower: true, strict: true });
+  if (title) {
+    const nextSlug = slugify(title, { lower: true, strict: true });
+    const existingArticle = articles.find((item) => item.slug === nextSlug && item._id !== article._id);
+    if (existingArticle) {
+      return sendError(res, 409, 'ARTICLE_EXISTS', 'Статья с таким заголовком уже существует');
+    }
+    article.slug = nextSlug;
+  }
 
-  await article.save();
-  res.json(article);
+  article.updatedAt = new Date().toISOString();
+  await saveArticles(articles);
+  return sendSuccess(res, 200, article);
 };
 
 const remove = async (req, res) => {
-  const article = await Article.findById(req.params.id);
-  if (!article) return res.status(404).json({ error: 'Article not found' });
+  const articles = await getArticles();
+  const article = articles.find((item) => item._id === req.params.id);
+  if (!article) return sendError(res, 404, 'ARTICLE_NOT_FOUND', 'Статья не найдена');
 
-  if (req.user.role !== 'admin' && article.author.toString() !== req.user.id) {
-    return res.status(403).json({ error: 'No permission to delete this article' });
+  if (req.user.role !== 'admin' && article.authorId !== req.user.id) {
+    return sendError(res, 403, 'FORBIDDEN', 'Нельзя удалять чужую статью');
   }
 
-  await Article.deleteOne({ _id: req.params.id });
-  res.json({ message: 'Deleted' });
+  const nextArticles = articles.filter((item) => item._id !== req.params.id);
+  await saveArticles(nextArticles);
+  return sendSuccess(res, 200, { message: 'Статья удалена' });
 };
 
 module.exports = { getAll, getById, create, update, remove };

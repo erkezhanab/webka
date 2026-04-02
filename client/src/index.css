@@ -1,43 +1,77 @@
 :root {
-  --bg: #ffffff;
-  --text: #0b0f1c;
-  --card: #f3f4f6;
-  --border: #cbd5e1;
+  --bg: #f5f7fb;
+  --text: #132238;
+  --muted: #58708e;
+  --surface: rgba(255, 255, 255, 0.86);
+  --surface-strong: #ffffff;
+  --border: rgba(88, 112, 142, 0.18);
+  --accent: #0f62fe;
+  --accent-2: #14b8a6;
+  --accent-soft: rgba(15, 98, 254, 0.1);
+  --tag-bg: rgba(20, 184, 166, 0.12);
+  --shadow: 0 22px 44px rgba(19, 34, 56, 0.08);
 }
 
 [data-theme='dark'] {
-  --bg: #081025;
-  --text: #e2e8f0;
-  --card: #1f2a42;
-  --border: #334155;
+  --bg: #08111f;
+  --text: #edf3ff;
+  --muted: #91a5c1;
+  --surface: rgba(17, 27, 46, 0.88);
+  --surface-strong: #111b2e;
+  --border: rgba(145, 165, 193, 0.18);
+  --accent: #60a5fa;
+  --accent-2: #22c55e;
+  --accent-soft: rgba(96, 165, 250, 0.12);
+  --tag-bg: rgba(34, 197, 94, 0.12);
+  --shadow: 0 22px 44px rgba(0, 0, 0, 0.24);
 }
 
 * { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Manrope', 'Segoe UI', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
+  background-image:
+    radial-gradient(circle at top left, rgba(15, 98, 254, 0.08), transparent 24%),
+    radial-gradient(circle at top right, rgba(20, 184, 166, 0.08), transparent 20%);
 }
 
 #root { min-height: 100vh; }
 
-.container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 
-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px; position: sticky; top: 0; z-index: 20; }
-.nav { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
-.nav-left, .nav-right { display: flex; align-items: center; gap: 10px; }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-.btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; cursor: pointer; padding: 8px 12px; }
-.btn:hover { opacity: 0.9; }
-.input { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
-.grid { display: grid; gap: 16px; }
-.grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-.skeleton { width: 100%; aspect-ratio: 16/9; border-radius: 8px; animation: pulse 1.4s infinite; background: linear-gradient(90deg, var(--card), var(--bg), var(--card)); }
-@keyframes pulse { 0% { opacity: .6; } 50% { opacity: 1; } 100% { opacity: .6; } }
-
-@media (max-width: 768px) {
-  .nav { flex-direction: column; align-items: flex-start; }
-  h1 { font-size: 24px; }
+a {
+  color: inherit;
 }
 
+img {
+  display: block;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+h1, h2, h3, p {
+  margin-top: 0;
+}
+
+.ql-toolbar.ql-snow,
+.ql-container.ql-snow {
+  border-color: var(--border) !important;
+  background: var(--surface-strong);
+}
+
+.ql-editor {
+  min-height: 260px;
+  color: var(--text);
+}

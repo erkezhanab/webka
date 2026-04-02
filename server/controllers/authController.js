@@ -1,36 +1,71 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/user');
+const { sendError, sendSuccess } = require('../utils/http');
+const { createId, getUsers, saveUsers } = require('../data/store');
+
+const emailPattern = /^[\w-.]+@[\w-]+\.[A-Za-z]{2,}$/;
 
 const register = async (req, res) => {
   const { name, email, password, role } = req.body;
   if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Name, email and password required' });
+    return sendError(res, 400, 'VALIDATION_ERROR', 'Имя, email и пароль обязательны');
   }
 
-  const existing = await User.findOne({ email });
-  if (existing) return res.status(409).json({ error: 'Email already registered' });
+  if (name.trim().length < 2) {
+    return sendError(res, 400, 'VALIDATION_ERROR', 'Имя должно содержать минимум 2 символа');
+  }
+
+  if (!emailPattern.test(email)) {
+    return sendError(res, 400, 'VALIDATION_ERROR', 'Введите корректный email');
+  }
+
+  if (password.length < 6) {
+    return sendError(res, 400, 'VALIDATION_ERROR', 'Пароль должен содержать минимум 6 символов');
+  }
+
+  const normalizedRole = ['reader', 'author'].includes(role) ? role : 'reader';
+  const users = await getUsers();
+
+  const existing = users.find((user) => user.email === email.trim().toLowerCase());
+  if (existing) return sendError(res, 409, 'EMAIL_EXISTS', 'Пользователь с таким email уже зарегистрирован');
 
   const hashed = await bcrypt.hash(password, 12);
-  const user = await User.create({ name, email, password: hashed, role: role || 'reader' });
+  const now = new Date().toISOString();
+  const user = {
+    _id: createId(),
+    name: name.trim(),
+    email: email.trim().toLowerCase(),
+    password: hashed,
+    role: normalizedRole,
+    createdAt: now,
+    updatedAt: now,
+  };
 
-  res.status(201).json({ id: user._id, name: user.name, email: user.email, role: user.role });
+  users.push(user);
+  await saveUsers(users);
+
+  return sendSuccess(res, 201, { id: user._id, name: user.name, email: user.email, role: user.role });
 };
 
 const login = async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  if (!email || !password) {
+    return sendError(res, 400, 'VALIDATION_ERROR', 'Email и пароль обязательны');
+  }
 
-  const user = await User.findOne({ email });
-  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  const users = await getUsers();
+  const user = users.find((item) => item.email === email.trim().toLowerCase());
+  if (!user) return sendError(res, 401, 'INVALID_CREDENTIALS', 'Неверный email или пароль');
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
+  if (!isMatch) return sendError(res, 401, 'INVALID_CREDENTIALS', 'Неверный email или пароль');
 
-  const payload = { id: user._id, role: user.role, name: user.name };
-  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+  const payload = { id: user._id, role: user.role, name: user.name, email: user.email };
+  const token = jwt.sign({ id: user._id, role: user.role, name: user.name }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  });
 
-  res.json({ token, user: payload });
+  return sendSuccess(res, 200, { token, user: payload });
 };
 
 module.exports = { register, login };

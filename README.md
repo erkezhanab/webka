@@ -1,379 +1,259 @@
-# 📰 NewsHub - Modern News & Articles Portal
+# News Portal MERN
 
-**A full-featured web portal for publishing news and articles with modern UI, real-time authentication, and comprehensive content management.**
+Курсовой проект по модулю «Проектирование и обеспечение бесперебойной работы web-сайта».
 
-![Next.js](https://img.shields.io/badge/Next.js-16.2-blue) ![React](https://img.shields.io/badge/React-19-cyan) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue) ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.0-38B2AC) ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green)
+Проект представляет собой новостной портал на стеке MERN:
+- `client/` — React + Vite + React Router + i18n
+- `server/` — Node.js + Express + MongoDB + Mongoose + JWT + bcrypt
 
-## ✨ Key Features
+Корневая папка `app/` с Next.js не используется в защищаемой версии курсового проекта и не входит в основной сценарий запуска.
 
-### 📚 Content Management
-- **CRUD Operations**: Create, read, update, and delete articles with ease
-- **Rich Features**: Title, content, featured images, and tags for each article
-- **Author Control**: Only article authors can edit or delete their own content
-- **Admin Panel**: Admins can manage all content
+## Цель проекта
 
-### 🔐 Authentication & Authorization
-- **User Registration**: Secure account creation with validation
-- **Login System**: Credentials-based authentication with NextAuth.js
-- **Role-Based Access**: Three roles - Reader, Author, Admin
-- **Password Security**: Bcrypt hashing for secure password storage
+Разработать полнофункциональное web-приложение для публикации и просмотра статей с:
+- регистрацией и входом пользователей;
+- разграничением ролей `reader / author / admin`;
+- полным CRUD для статей;
+- адаптивным интерфейсом;
+- локализацией на русском и казахском языках;
+- хранением данных в MongoDB.
 
-### 🎨 Modern UI/UX
-- **Responsive Design**: Perfect on mobile, tablet, and desktop
-- **Custom Components**: Reusable Button, Card, Badge, Input components
-- **Loading States**: Skeleton loaders for better perceived performance
-- **Toast Notifications**: User feedback notifications
-- **Mobile Menu**: Hamburger menu for mobile navigation
-- **Modern Design**: Gradient accents, smooth transitions, and clean typography
+## Основной функционал
 
-### 🔍 Search & Discovery
-- **Article Search**: Full-text search across titles, content, and authors
-- **Sort Options**: Sort by newest or oldest articles
-- **Tag System**: Organize articles with tags
-- **Result Filtering**: Real-time filtering of search results
+- регистрация пользователя;
+- вход по email и паролю;
+- JWT-авторизация;
+- просмотр списка статей;
+- фильтрация по категории и поиск;
+- просмотр полной статьи;
+- создание статьи для `author` и `admin`;
+- редактирование статьи автором или администратором;
+- удаление статьи автором или администратором;
+- страница профиля;
+- темы интерфейса `light / dark`;
+- локализация `RU / KK / EN`;
+- обработка состояний `loading / error / empty / 404`.
 
-### ⚡ Performance & Best Practices
-- **Next.js Optimization**: Image optimization with next/image
-- **Server-Side Rendering**: SSR pages for better SEO
-- **Error Handling**: Comprehensive error handling with user-friendly messages
-- **Validation**: Client-side and server-side validation
-- **404 Pages**: Custom not-found and error boundaries
+## Стек технологий
 
-## 🚀 Getting Started
+### Client
 
-### Prerequisites
-- Node.js 18+ 
-- MongoDB Atlas account (or local MongoDB)
-- Git
+- React 18
+- Vite
+- React Router
+- Axios
+- React Quill
+- React Toastify
+- i18next / react-i18next
+- TypeScript
 
-### Installation
+### Server
 
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-cd webka
+- Node.js
+- Express
+- MongoDB
+- Mongoose
+- JSON Web Token
+- bcryptjs
+- CORS
+
+## Структура проекта
+
+```text
+webka/
+├── client/
+│   ├── src/
+│   │   ├── lib/
+│   │   ├── App.tsx
+│   │   ├── i18n.ts
+│   │   ├── index.css
+│   │   └── types.ts
+│   └── .env.example
+├── server/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── utils/
+│   ├── index.js
+│   ├── seed.js
+│   └── .env.example
+└── docs/
+    └── course-project-materials.md
 ```
 
-2. **Install dependencies**
-```bash
-npm install
-```
+## Настройка окружения
 
-3. **Environment Setup**
+### 1. MongoDB
 
-Create `.env.local` file in the root:
+Запусти локальный MongoDB или используй MongoDB Atlas.
+
+Пример локального URI:
+
 ```env
-# Database
-MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/<database>
-
-# NextAuth
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-key-here
-
-# Auth Provider
-GITHUB_ID=your-github-id
-GITHUB_SECRET=your-github-secret
+mongodb://localhost:27017/newsportal
 ```
 
-4. **Run Development Server**
+### 2. Server env
+
+Создай файл `server/.env` на основе `server/.env.example`:
+
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/newsportal
+JWT_SECRET=change-me-to-a-long-random-string
+JWT_EXPIRES_IN=7d
+```
+
+### 3. Client env
+
+Создай файл `client/.env` на основе `client/.env.example`:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+## Локальный запуск
+
+### Server
+
 ```bash
+cd server
+npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+### Client
 
-## 📋 Project Structure
-
-```
-/app
-  /api
-    /articles          # Article CRUD endpoints
-    /auth              # NextAuth configuration
-    /users             # User registration endpoint
-  /components
-    /ui                # Reusable UI components (Button, Card, Input, etc.)
-    Header.tsx         # Navigation header with mobile menu
-    SessionProvider.tsx # Auth & Toast providers
-  /articles
-    page.tsx           # Articles list with search & filters
-    [id]/
-      page.tsx         # Article detail page
-      edit/page.tsx    # Edit article page
-  /create-article
-    page.tsx           # Create new article page
-  /login
-    page.tsx           # Login page
-  /register
-    page.tsx           # Registration page
-  /profile
-    page.tsx           # User profile page
-  /lib
-    /models            # MongoDB models (Article, User)
-    db.ts              # Database connection
-    mongodb.ts         # MongoDB initialization
-
-/public              # Static assets
-/types               # TypeScript definitions
-```
-
-## 🔌 API Reference
-
-### Articles Endpoints
-
-#### Get All Articles
 ```bash
-GET /api/articles
+cd client
+npm install
+npm run dev
 ```
-Returns: Array of published articles with author information
 
-#### Get Single Article
+После запуска:
+- client: [http://localhost:5173](http://localhost:5173)
+- server: [http://localhost:5000](http://localhost:5000)
+
+## Тестовые данные
+
+Для заполнения базы тестовыми пользователями и статьями:
+
 ```bash
-GET /api/articles/:id
+cd server
+npm run seed
 ```
-Returns: Article details
 
-#### Create Article
-```bash
-POST /api/articles
-Headers: Authorization required
-Body: {
-  "title": "string",
-  "content": "string",
-  "image": "url (optional)",
-  "tags": ["string"]
-}
-```
-Returns: Created article
+Seed создаёт:
+- `reader@example.com / reader123`
+- `author@example.com / author123`
+- `admin@example.com / admin123`
 
-#### Update Article
-```bash
-PUT /api/articles/:id
-Headers: Authorization required
-Body: {
-  "title": "string (optional)",
-  "content": "string (optional)",
-  "image": "url (optional)",
-  "tags": ["string (optional)"]
-}
-```
-Returns: Updated article
+## Роли пользователей
 
-#### Delete Article
-```bash
-DELETE /api/articles/:id
-Headers: Authorization required
-```
-Returns: Success message
+- `reader` — просмотр статей;
+- `author` — просмотр, создание, редактирование и удаление своих статей;
+- `admin` — полный контроль над материалами.
 
-### Auth Endpoints
+## API Endpoints
 
-#### Register
-```bash
+### Auth
+
+- `POST /api/auth/register` — регистрация пользователя
+- `POST /api/auth/login` — вход и получение JWT
+
+### Articles
+
+- `GET /api/articles` — список статей
+- `GET /api/articles/:id` — одна статья
+- `POST /api/articles` — создать статью (`author/admin`)
+- `PUT /api/articles/:id` — обновить статью (`author/admin`, владелец или admin)
+- `DELETE /api/articles/:id` — удалить статью (`author/admin`, владелец или admin)
+
+## Пример запросов
+
+### Регистрация
+
+```http
 POST /api/auth/register
-Body: {
-  "email": "string",
-  "password": "string",
-  "name": "string"
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "123456",
+  "role": "author"
 }
 ```
 
-#### Login
-```bash
-POST /api/auth/signin
-Body: {
-  "email": "string",
-  "password": "string"
+### Вход
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "author@example.com",
+  "password": "author123"
 }
 ```
 
-## 🎯 Pages & Routes
+### Создание статьи
 
-| Route | Description | Auth Required |
-|-------|-------------|---|
-| `/` | Home page with CTA | No |
-| `/articles` | Browse all articles | No |
-| `/articles/:id` | View article details | No |
-| `/articles/:id/edit` | Edit article | Yes (Author/Admin) |
-| `/create-article` | Create new article | Yes |
-| `/login` | User login | No |
-| `/register` | User registration | No |
-| `/profile` | User profile | Yes |
+```http
+POST /api/articles
+Authorization: Bearer <token>
+Content-Type: application/json
 
-## 🎨 UI Components
-
-### Button
-```tsx
-<Button variant="primary" size="md" loading={false}>
-  Click me
-</Button>
-```
-Variants: `primary`, `secondary`, `danger`, `success`, `outline`
-
-### Card
-```tsx
-<Card hover>
-  <CardHeader>Header</CardHeader>
-  <CardBody>Content</CardBody>
-  <CardFooter>Footer</CardFooter>
-</Card>
+{
+  "title": "Новая статья",
+  "category": "Tech",
+  "featured_image": "https://example.com/image.jpg",
+  "content": "<p>Полный текст статьи...</p>"
+}
 ```
 
-### Input
-```tsx
-<Input
-  label="Email"
-  type="email"
-  error="Validation error"
-  helpText="Help text"
-/>
-```
+## Ручное тестирование
 
-### Toast Notification
-```tsx
-const { showToast } = useToast();
-showToast("Success message", "success");
-```
+Нужно проверить:
 
-## ✅ Validation
+1. Регистрацию нового пользователя.
+2. Запрет дублирования email.
+3. Вход с корректными и некорректными данными.
+4. Получение списка статей.
+5. Фильтрацию и поиск.
+6. Просмотр статьи по `id`.
+7. Создание статьи автором.
+8. Редактирование своей статьи.
+9. Запрет редактирования чужой статьи.
+10. Удаление статьи.
+11. Переключение языков `RU / KK`.
+12. Переключение темы `light / dark`.
+13. Отображение `404` и ошибок API.
+14. Адаптивность на mobile / tablet / desktop.
 
-### Form Validation
-- **Email**: Valid email format
-- **Password**: Minimum 6 characters
-- **Name**: Minimum 2 characters
-- **Article Title**: Minimum 5 characters
-- **Article Content**: Minimum 20 characters
-- **Image URL**: Valid HTTP(S) URL (optional)
+## Материалы для защиты
 
-## 🔒 Security Features
+Для пояснительной записки и защиты используй файл:
 
-- **Password Hashing**: bcrypt encryption
-- **JWT Tokens**: Secure session management
-- **CSRF Protection**: NextAuth CSRF tokens
-- **Input Validation**: Server-side validation
-- **Authorization Checks**: RBAC enforcement
-- **Rate Limiting**: API endpoint protection
+[docs/course-project-materials.md](./docs/course-project-materials.md)
 
-## 📱 Responsive Breakpoints
+В нём собраны:
+- введение;
+- предметная область;
+- архитектура;
+- структура БД;
+- описание маршрутов;
+- сценарий демонстрации;
+- план тестирования.
 
-- **Mobile**: < 640px
-- **Tablet**: 640px - 1024px
-- **Desktop**: > 1024px
+## Деплой
 
-## 🌐 Supported Browsers
+Для максимальной оценки рекомендуется выложить:
+- client на Vercel или Netlify;
+- server на Render или Railway;
+- MongoDB на Atlas.
 
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
+## Автор
 
-## 📊 Performance Metrics
-
-- **Page Load**: < 3 seconds (Target)
-- **Time to Interactive**: < 2 seconds
-- **Lighthouse Score**: 90+
-
-## 🚀 Deployment
-
-### Deploy to Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Set environment variables in Vercel dashboard
-4. Deploy with one click
-
-### Deploy to Other Platforms
-
-- **Netlify**: Requires serverless functions
-- **Render**: Full Node.js support
-- **Railway**: Docker-based deployment
-
-See deployment documentation in Next.js [docs](https://nextjs.org/docs/deployment).
-
-## 🛠️ Development
-
-### Available Scripts
-
-```bash
-# Development server
-npm run dev
-
-# Production build
-npm run build
-
-# Start production server
-npm run start
-
-# Run linter
-npm run lint
-```
-
-### Git Workflow
-
-```bash
-# Create feature branch
-git checkout -b feature/feature-name
-
-# Commit changes
-git commit -m "feat: add new feature"
-
-# Push to repository
-git push origin feature/feature-name
-
-# Create Pull Request
-```
-
-## 📝 Commit Message Format
-
-```
-<type>: <subject>
-<body>
-
-<footer>
-```
-
-**Types**: feat, fix, docs, style, refactor, test, chore
-
-## 🐛 Known Issues
-
-- Search is case-sensitive (fix coming)
-- Image upload limited to URLs only
-- No image compression currently
-
-## 🔜 Roadmap
-
-- [ ] Rich text editor (WYSIWYG)
-- [ ] Image upload to cloud storage
-- [ ] Comment system
-- [ ] Favorites/Bookmarks
-- [ ] Social sharing
-- [ ] Analytics dashboard
-- [ ] Email notifications
-- [ ] API rate limiting
-- [ ] Dark mode theme
-- [ ] Multi-language support
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see LICENSE file for details.
-
-## 💬 Support
-
-For support, email support@newshub.com or create an issue on GitHub.
-
-## 👨‍💻 Author
-
-**Your Name** - Full Stack Developer
-- GitHub: [@yourusername](https://github.com)
-- Email: your.email@example.com
-
----
-
-**Made with ❤️ using Next.js, React, and TypeScript**
-
+Курсовой проект по дисциплине ПМ04 «Проектирование и обеспечение бесперебойной работы web-сайта».

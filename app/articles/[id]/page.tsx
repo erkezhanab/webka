@@ -10,6 +10,7 @@ import Badge from '@/app/components/ui/Badge';
 import Card, { CardBody } from '@/app/components/ui/Card';
 import { ArticleDetailSkeleton } from '@/app/components/ui/Skeleton';
 import { useToast } from '@/app/components/ui/Toast';
+import { useI18n } from '@/app/components/I18nProvider';
 
 interface Article {
   _id: string;
@@ -31,6 +32,7 @@ export default function ArticlePage() {
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(false);
   const { showToast } = useToast();
+  const { t, formatDate, translateError } = useI18n();
 
   useEffect(() => {
     async function loadArticle() {
@@ -46,7 +48,7 @@ export default function ArticlePage() {
         const data = await res.json();
         setArticle(data);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? translateError(err.message) : t('common.unknownError'));
       } finally {
         setLoading(false);
       }
@@ -55,12 +57,12 @@ export default function ArticlePage() {
     if (id) {
       loadArticle();
     }
-  }, [id]);
+  }, [id, t, translateError]);
 
   const isAuthor = session?.user?.id === article?.author._id || session?.user?.role === 'admin';
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this article?')) return;
+    if (!confirm(t('article.confirmDelete'))) return;
 
     setDeleting(true);
     try {
@@ -69,10 +71,11 @@ export default function ArticlePage() {
         throw new Error('Failed to delete article');
       }
 
-      showToast('Article deleted successfully', 'success');
+      showToast(t('article.deleteSuccess'), 'success');
       router.push('/articles');
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Unknown error', 'error');
+      const message = err instanceof Error ? translateError(err.message) : t('common.unknownError');
+      showToast(message, 'error');
     } finally {
       setDeleting(false);
     }
@@ -90,13 +93,13 @@ export default function ArticlePage() {
     return (
       <Card hover={false} className="mx-auto max-w-2xl">
         <CardBody className="py-14 text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--danger)]">Unavailable</p>
-          <h1 className="section-title mt-4 text-4xl font-bold text-[color:var(--ink)]">Article not found</h1>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--danger)]">{t('article.unavailable')}</p>
+          <h1 className="section-title mt-4 text-4xl font-bold text-[color:var(--ink)]">{t('article.notFoundTitle')}</h1>
           <p className="mx-auto mt-3 max-w-lg text-[color:var(--muted)]">
-            {error || 'This article may have been removed or the link is no longer valid.'}
+            {error || t('article.notFoundDescription')}
           </p>
           <Link href="/articles" className="mt-6 inline-block">
-            <Button>Back to Articles</Button>
+            <Button>{t('article.backToArticles')}</Button>
           </Link>
         </CardBody>
       </Card>
@@ -106,7 +109,7 @@ export default function ArticlePage() {
   return (
     <article className="mx-auto max-w-5xl space-y-8">
       <Link href="/articles" className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white/70 px-4 py-2 text-sm font-semibold text-[color:var(--muted)] transition hover:bg-white hover:text-[color:var(--ink)]">
-        Back to feed
+        {t('article.backToFeed')}
       </Link>
 
       <section className="overflow-hidden rounded-[36px] border border-[color:var(--line)] bg-[color:var(--panel)] shadow-[var(--shadow-lg)]">
@@ -116,7 +119,7 @@ export default function ArticlePage() {
           </div>
         ) : (
           <div className="flex h-[24rem] items-center justify-center bg-[linear-gradient(135deg,#dbeafe,#ecfeff)] px-8 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
-            Featured editorial visual
+            {t('article.featuredVisual')}
           </div>
         )}
 
@@ -134,10 +137,10 @@ export default function ArticlePage() {
             </h1>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.18em] text-[color:var(--muted)]">Written by</p>
+                <p className="text-sm uppercase tracking-[0.18em] text-[color:var(--muted)]">{t('article.writtenBy')}</p>
                 <p className="mt-1 text-lg font-semibold text-[color:var(--ink)]">{article.author.name}</p>
                 <p className="mt-1 text-sm text-[color:var(--muted)]">
-                  {new Date(article.createdAt).toLocaleDateString('en-US', {
+                  {formatDate(article.createdAt, {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
@@ -147,10 +150,10 @@ export default function ArticlePage() {
               {isAuthor && (
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Link href={`/articles/${article._id}/edit`}>
-                    <Button variant="secondary">Edit Article</Button>
+                    <Button variant="secondary">{t('article.editArticle')}</Button>
                   </Link>
                   <Button variant="danger" loading={deleting} onClick={handleDelete}>
-                    Delete Article
+                    {t('article.deleteArticle')}
                   </Button>
                 </div>
               )}

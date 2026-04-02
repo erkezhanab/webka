@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { useI18n } from '@/app/components/I18nProvider';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -55,6 +58,8 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export function Select({ label, error, options, className = '', ...props }: SelectProps) {
+  const { t } = useI18n();
+
   return (
     <div className="space-y-2">
       {label && <label className="block text-sm font-semibold text-[color:var(--ink)]">{label}</label>}
@@ -66,7 +71,7 @@ export function Select({ label, error, options, className = '', ...props }: Sele
         } ${className}`}
         {...props}
       >
-        <option value="">Select an option</option>
+        <option value="">{t('common.selectOption')}</option>
         {options.map(opt => (
           <option key={opt.value} value={opt.value}>
             {opt.label}

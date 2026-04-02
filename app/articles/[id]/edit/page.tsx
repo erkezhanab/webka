@@ -8,6 +8,7 @@ import Input, { TextArea } from '@/app/components/ui/Input';
 import Card, { CardBody, CardHeader } from '@/app/components/ui/Card';
 import { useToast } from '@/app/components/ui/Toast';
 import { ArticleDetailSkeleton } from '@/app/components/ui/Skeleton';
+import { useI18n } from '@/app/components/I18nProvider';
 
 interface Article {
   _id: string;
@@ -33,6 +34,7 @@ export default function EditArticle() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { showToast } = useToast();
+  const { t, translateError } = useI18n();
 
   useEffect(() => {
     async function loadArticle() {
@@ -47,7 +49,8 @@ export default function EditArticle() {
         setImage(data.image || '');
         setTags(data.tags?.join(', ') || '');
       } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : 'Failed to load article', 'error');
+        const message = err instanceof Error ? translateError(err.message) : t('editArticle.loadFailed');
+        showToast(message, 'error');
         router.push('/articles');
       } finally {
         setLoading(false);
@@ -55,22 +58,22 @@ export default function EditArticle() {
     }
 
     if (id) loadArticle();
-  }, [id, router, showToast]);
+  }, [id, router, showToast, t, translateError]);
 
   useEffect(() => {
     if (!session) {
       router.push('/login');
     } else if (article && session.user?.id !== article.author._id && session.user?.role !== 'admin') {
-      showToast('You can only edit your own articles', 'error');
+      showToast(t('editArticle.ownOnly'), 'error');
       router.push(`/articles/${id}`);
     }
-  }, [session, article, router, id, showToast]);
+  }, [session, article, router, id, showToast, t]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (title.trim().length < 5) newErrors.title = 'Title should be at least 5 characters long';
-    if (content.trim().length < 20) newErrors.content = 'Content should be at least 20 characters long';
-    if (image && !/^https?:\/\/.+/.test(image)) newErrors.image = 'Please enter a valid image URL or leave blank';
+    if (title.trim().length < 5) newErrors.title = t('editArticle.invalidTitle');
+    if (content.trim().length < 20) newErrors.content = t('editArticle.invalidContent');
+    if (image && !/^https?:\/\/.+/.test(image)) newErrors.image = t('editArticle.invalidImage');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -100,10 +103,11 @@ export default function EditArticle() {
         throw new Error(data.error || 'Failed to update article');
       }
 
-      showToast('Article updated successfully', 'success');
+      showToast(t('editArticle.success'), 'success');
       setTimeout(() => router.push(`/articles/${id}`), 900);
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Unknown error', 'error');
+      const message = err instanceof Error ? translateError(err.message) : t('common.unknownError');
+      showToast(message, 'error');
     } finally {
       setSaving(false);
     }
@@ -124,30 +128,58 @@ export default function EditArticle() {
   return (
     <div className="space-y-8">
       <section className="glass-panel rounded-[32px] px-6 py-8 sm:px-8">
-        <span className="eyebrow">Edit mode</span>
+        <span className="eyebrow">{t('editArticle.eyebrow')}</span>
         <h1 className="section-title mt-5 text-4xl font-bold tracking-[-0.05em] text-[color:var(--ink)] sm:text-5xl">
-          Refine your article before it goes back to readers.
+          {t('editArticle.title')}
         </h1>
       </section>
 
       <Card className="mx-auto max-w-4xl">
         <CardHeader>
-          <h2 className="section-title text-3xl font-bold text-[color:var(--ink)]">Edit Article</h2>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">Update content, imagery, and tags.</p>
+          <h2 className="section-title text-3xl font-bold text-[color:var(--ink)]">{t('editArticle.formTitle')}</h2>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">{t('editArticle.formDescription')}</p>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-5">
-            <Input label="Article Title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} error={errors.title} required minLength={5} />
-            <TextArea label="Content" value={content} onChange={(e) => setContent(e.target.value)} error={errors.content} required minLength={20} rows={12} />
-            <Input label="Featured Image URL" type="url" value={image} onChange={(e) => setImage(e.target.value)} error={errors.image} />
-            <Input label="Tags" type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="news, technology, design" />
+            <Input
+              label={t('createArticle.titleLabel')}
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              error={errors.title}
+              required
+              minLength={5}
+            />
+            <TextArea
+              label={t('createArticle.contentLabel')}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              error={errors.content}
+              required
+              minLength={20}
+              rows={12}
+            />
+            <Input
+              label={t('createArticle.imageLabel')}
+              type="url"
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              error={errors.image}
+            />
+            <Input
+              label={t('createArticle.tagsLabel')}
+              type="text"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder={t('createArticle.tagsPlaceholder')}
+            />
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button type="submit" className="flex-1" loading={saving} size="lg">
-                Save Changes
+                {t('editArticle.submit')}
               </Button>
               <Button type="button" variant="outline" className="flex-1" onClick={() => router.push(`/articles/${id}`)}>
-                Cancel
+                {t('editArticle.cancel')}
               </Button>
             </div>
           </form>

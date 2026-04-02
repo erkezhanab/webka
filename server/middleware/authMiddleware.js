@@ -1,19 +1,21 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/user');
+const { sendError } = require('../utils/http');
+const { getUsers } = require('../data/store');
 
 const authMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Token required' });
+  if (!token) return sendError(res, 401, 'TOKEN_REQUIRED', 'Требуется токен авторизации');
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-    if (!user) return res.status(401).json({ error: 'User not found' });
+    const users = await getUsers();
+    const user = users.find((item) => item._id === decoded.id);
+    if (!user) return sendError(res, 401, 'USER_NOT_FOUND', 'Пользователь не найден');
 
     req.user = { id: user._id.toString(), role: user.role, name: user.name };
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid token' });
+    return sendError(res, 401, 'INVALID_TOKEN', 'Недействительный токен');
   }
 };
 

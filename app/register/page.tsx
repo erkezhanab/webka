@@ -7,6 +7,7 @@ import Button from '@/app/components/ui/Button';
 import Input from '@/app/components/ui/Input';
 import Card, { CardBody, CardHeader } from '@/app/components/ui/Card';
 import { useToast } from '@/app/components/ui/Toast';
+import { useI18n } from '@/app/components/I18nProvider';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -17,13 +18,14 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { showToast } = useToast();
+  const { t, translateError } = useI18n();
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (name.trim().length < 2) newErrors.name = 'Name must contain at least 2 characters';
-    if (!/^[\w-.]+@[\w-]+\.[A-Za-z]{2,}$/.test(email)) newErrors.email = 'Please enter a valid email address';
-    if (password.length < 6) newErrors.password = 'Password must be at least 6 characters long';
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (name.trim().length < 2) newErrors.name = t('register.invalidName');
+    if (!/^[\w-.]+@[\w-]+\.[A-Za-z]{2,}$/.test(email)) newErrors.email = t('register.invalidEmail');
+    if (password.length < 6) newErrors.password = t('register.invalidPassword');
+    if (password !== confirmPassword) newErrors.confirmPassword = t('register.passwordsMismatch');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -45,10 +47,11 @@ export default function Register() {
         throw new Error(data.error || 'Failed to register');
       }
 
-      showToast('Registration successful. Redirecting to login...', 'success');
+      showToast(t('register.success'), 'success');
       setTimeout(() => router.push('/login'), 800);
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Unknown error', 'error');
+      const message = err instanceof Error ? translateError(err.message) : t('common.unknownError');
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -57,36 +60,70 @@ export default function Register() {
   return (
     <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
       <section className="glass-panel rounded-[32px] px-6 py-8 sm:px-8">
-        <span className="eyebrow">Join the platform</span>
+        <span className="eyebrow">{t('register.eyebrow')}</span>
         <h1 className="section-title mt-5 text-4xl font-bold tracking-[-0.05em] text-[color:var(--ink)] sm:text-5xl">
-          Create an account for publishing, editing, and growing your audience.
+          {t('register.title')}
         </h1>
         <p className="mt-4 max-w-xl text-lg leading-8 text-[color:var(--muted)]">
-          Set up your profile once and use it across the full NewsHub editorial experience.
+          {t('register.description')}
         </p>
       </section>
 
       <Card className="mx-auto w-full max-w-xl">
         <CardHeader>
-          <h2 className="section-title text-3xl font-bold text-[color:var(--ink)]">Create Account</h2>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">Join the community and start publishing.</p>
+          <h2 className="section-title text-3xl font-bold text-[color:var(--ink)]">{t('register.formTitle')}</h2>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">{t('register.formDescription')}</p>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            <Input label="Full Name" type="text" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} placeholder="John Doe" required minLength={2} />
-            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} placeholder="you@example.com" required />
-            <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} helpText="At least 6 characters" required minLength={6} />
-            <Input label="Confirm Password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} error={errors.confirmPassword} required minLength={6} />
+            <Input
+              label={t('register.nameLabel')}
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              error={errors.name}
+              placeholder={t('register.namePlaceholder')}
+              required
+              minLength={2}
+            />
+            <Input
+              label={t('register.emailLabel')}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              error={errors.email}
+              placeholder={t('register.emailPlaceholder')}
+              required
+            />
+            <Input
+              label={t('register.passwordLabel')}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={errors.password}
+              helpText={t('register.passwordHelp')}
+              required
+              minLength={6}
+            />
+            <Input
+              label={t('register.confirmPasswordLabel')}
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              error={errors.confirmPassword}
+              required
+              minLength={6}
+            />
 
             <Button type="submit" className="w-full" loading={loading} size="lg">
-              Create Account
+              {t('register.submit')}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-[color:var(--muted)]">
-            Already registered?{' '}
+            {t('register.alreadyRegistered')}{' '}
             <Link href="/login" className="font-semibold text-[color:var(--brand-strong)]">
-              Log in
+              {t('register.login')}
             </Link>
           </p>
         </CardBody>

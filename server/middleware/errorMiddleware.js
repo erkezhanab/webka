@@ -1,10 +1,15 @@
+const { sendError } = require('../utils/http');
+
 const notFoundMiddleware = (req, res) => {
-  res.status(404).json({ error: 'Not found' });
+  return sendError(res, 404, 'NOT_FOUND', 'Ресурс не найден');
 };
 
 const errorMiddleware = (err, req, res, next) => {
   console.error('ERROR', err);
-  res.status(500).json({ error: err.message || 'Server Error' });
+  const status = err.status || 500;
+  const code = err.code || 'INTERNAL_ERROR';
+  const message = err.message || 'Внутренняя ошибка сервера';
+  return sendError(res, status, code, message);
 };
 
 module.exports = { notFoundMiddleware, errorMiddleware };

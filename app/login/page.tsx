@@ -8,6 +8,7 @@ import Button from '@/app/components/ui/Button';
 import Input from '@/app/components/ui/Input';
 import Card, { CardBody, CardHeader } from '@/app/components/ui/Card';
 import { useToast } from '@/app/components/ui/Toast';
+import { useI18n } from '@/app/components/I18nProvider';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -16,14 +17,15 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { showToast } = useToast();
+  const { t, translateError } = useI18n();
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!email.trim() || !/^[\w-.]+@[\w-]+\.[A-Za-z]{2,}$/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = t('login.invalidEmail');
     }
     if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = t('login.invalidPassword');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -42,14 +44,15 @@ export default function Login() {
       });
 
       if (result?.error) {
-        showToast('Invalid email or password', 'error');
-        setErrors({ form: 'Invalid email or password' });
+        showToast(t('login.invalidCredentials'), 'error');
+        setErrors({ form: t('login.invalidCredentials') });
       } else {
-        showToast('Login successful', 'success');
+        showToast(t('login.success'), 'success');
         router.push('/');
       }
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Unknown error', 'error');
+      const message = err instanceof Error ? translateError(err.message) : t('common.unknownError');
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -58,19 +61,19 @@ export default function Login() {
   return (
     <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
       <section className="glass-panel rounded-[32px] px-6 py-8 sm:px-8">
-        <span className="eyebrow">Welcome back</span>
+        <span className="eyebrow">{t('login.eyebrow')}</span>
         <h1 className="section-title mt-5 text-4xl font-bold tracking-[-0.05em] text-[color:var(--ink)] sm:text-5xl">
-          Sign in and continue publishing with confidence.
+          {t('login.title')}
         </h1>
         <p className="mt-4 max-w-xl text-lg leading-8 text-[color:var(--muted)]">
-          Access your profile, manage articles, and keep your editorial workflow moving.
+          {t('login.description')}
         </p>
       </section>
 
       <Card className="mx-auto w-full max-w-xl">
         <CardHeader>
-          <h2 className="section-title text-3xl font-bold text-[color:var(--ink)]">Log In</h2>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">Use your account details to enter the platform.</p>
+          <h2 className="section-title text-3xl font-bold text-[color:var(--ink)]">{t('login.formTitle')}</h2>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">{t('login.formDescription')}</p>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -80,18 +83,35 @@ export default function Login() {
               </p>
             )}
 
-            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} placeholder="you@example.com" required />
-            <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} helpText="At least 6 characters" required minLength={6} />
+            <Input
+              label={t('login.emailLabel')}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              error={errors.email}
+              placeholder={t('login.emailPlaceholder')}
+              required
+            />
+            <Input
+              label={t('login.passwordLabel')}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={errors.password}
+              helpText={t('login.passwordHelp')}
+              required
+              minLength={6}
+            />
 
             <Button type="submit" className="w-full" loading={loading} size="lg">
-              Enter Workspace
+              {t('login.submit')}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-[color:var(--muted)]">
-            Need an account?{' '}
+            {t('login.needAccount')}{' '}
             <Link href="/register" className="font-semibold text-[color:var(--brand-strong)]">
-              Create one
+              {t('login.createOne')}
             </Link>
           </p>
         </CardBody>

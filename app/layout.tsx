@@ -18,7 +18,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: 'NewsHub',
-  description: 'Modern publishing platform for stories, insights, and community-driven articles.',
+  description: 'Мультиязычная платформа для публикации статей и историй.',
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
+    <html lang="ru" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
       <body>
         <AuthProvider>
           <div className="site-shell">
