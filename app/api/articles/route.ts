@@ -18,7 +18,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -40,8 +40,19 @@ export async function POST(request: NextRequest) {
     await article.save();
 
     return NextResponse.json(article, { status: 201 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error);
+
+    if (
+      error instanceof Error &&
+      (error as any).name === 'ValidationError'
+    ) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: (error as any).errors },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

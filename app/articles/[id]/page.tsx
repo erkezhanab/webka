@@ -1,48 +1,167 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import Link from 'next/link';
+import Button from '@/app/components/ui/Button';
+import Badge from '@/app/components/ui/Badge';
+import Card, { CardBody } from '@/app/components/ui/Card';
+import { ArticleDetailSkeleton } from '@/app/components/ui/Skeleton';
+import { useToast } from '@/app/components/ui/Toast';
 
 interface Article {
   _id: string;
   title: string;
   content: string;
-  author: { name: string };
+  author: { name: string; _id: string };
   image?: string;
   createdAt: string;
+  tags?: string[];
 }
 
 export default function ArticlePage() {
   const params = useParams();
   const id = params.id as string;
+  const router = useRouter();
+  const { data: session } = useSession();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
-    fetch(`/api/articles/${id}`)
-      .then(res => res.json())
-      .then(data => {
+    async function loadArticle() {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await fetch(`/api/articles/${id}`);
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Article not found');
+        }
+
+        const data = await res.json();
         setArticle(data);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+      }
+    }
+
+    if (id) {
+      loadArticle();
+    }
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
-  if (!article) return <div>Article not found</div>;
+  const isAuthor = session?.user?.id === article?.author._id || session?.user?.role === 'admin';
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this article?')) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/articles/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        throw new Error('Failed to delete article');
+      }
+
+      showToast('Article deleted successfully', 'success');
+      router.push('/articles');
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Unknown error', 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-5xl py-4">
+        <ArticleDetailSkeleton />
+      </div>
+    );
+  }
+
+  if (error || !article) {
+    return (
+      <Card hover={false} className="mx-auto max-w-2xl">
+        <CardBody className="py-14 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--danger)]">Unavailable</p>
+          <h1 className="section-title mt-4 text-4xl font-bold text-[color:var(--ink)]">Article not found</h1>
+          <p className="mx-auto mt-3 max-w-lg text-[color:var(--muted)]">
+            {error || 'This article may have been removed or the link is no longer valid.'}
+          </p>
+          <Link href="/articles" className="mt-6 inline-block">
+            <Button>Back to Articles</Button>
+          </Link>
+        </CardBody>
+      </Card>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
-      {article.image && (
-        <Image src={article.image} alt={article.title} width={800} height={400} className="w-full h-64 object-cover rounded mb-4" />
-      )}
-      <p className="text-gray-600 mb-4">By {article.author.name} on {new Date(article.createdAt).toLocaleDateString()}</p>
-      <div className="prose" dangerouslySetInnerHTML={{ __html: article.content }} />
-    </div>
+    <article className="mx-auto max-w-5xl space-y-8">
+      <Link href="/articles" className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white/70 px-4 py-2 text-sm font-semibold text-[color:var(--muted)] transition hover:bg-white hover:text-[color:var(--ink)]">
+        Back to feed
+      </Link>
+
+      <section className="overflow-hidden rounded-[36px] border border-[color:var(--line)] bg-[color:var(--panel)] shadow-[var(--shadow-lg)]">
+        {article.image ? (
+          <div className="relative h-[24rem] w-full overflow-hidden bg-[linear-gradient(135deg,#dbeafe,#ecfeff)]">
+            <Image src={article.image} alt={article.title} fill className="object-cover" priority />
+          </div>
+        ) : (
+          <div className="flex h-[24rem] items-center justify-center bg-[linear-gradient(135deg,#dbeafe,#ecfeff)] px-8 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
+            Featured editorial visual
+          </div>
+        )}
+
+        <div className="space-y-8 px-6 py-8 sm:px-10 sm:py-10">
+          <header className="space-y-5 border-b border-[color:var(--line)] pb-8">
+            <div className="flex flex-wrap gap-2">
+              {article.tags?.map((tag) => (
+                <Badge key={tag} variant="primary">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+            <h1 className="section-title max-w-4xl text-4xl font-bold tracking-[-0.05em] text-[color:var(--ink)] sm:text-6xl">
+              {article.title}
+            </h1>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.18em] text-[color:var(--muted)]">Written by</p>
+                <p className="mt-1 text-lg font-semibold text-[color:var(--ink)]">{article.author.name}</p>
+                <p className="mt-1 text-sm text-[color:var(--muted)]">
+                  {new Date(article.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+              {isAuthor && (
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Link href={`/articles/${article._id}/edit`}>
+                    <Button variant="secondary">Edit Article</Button>
+                  </Link>
+                  <Button variant="danger" loading={deleting} onClick={handleDelete}>
+                    Delete Article
+                  </Button>
+                </div>
+              )}
+            </div>
+          </header>
+
+          <section className="article-prose max-w-none">
+            <div dangerouslySetInnerHTML={{ __html: article.content }} />
+          </section>
+        </div>
+      </section>
+    </article>
   );
 }

@@ -5,9 +5,10 @@ import clientPromise from '@/app/lib/mongodb';
 import User from '@/app/lib/models/User';
 import bcrypt from 'bcryptjs';
 import dbConnect from '@/app/lib/db';
+import type { SessionStrategy, User as NextAuthUser } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
 
 export const authOptions = {
-  adapter: MongoDBAdapter(clientPromise),
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -42,7 +43,21 @@ export const authOptions = {
     }),
   ],
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as SessionStrategy,
+  },
+  callbacks: {
+    async jwt({ token, user }: { token: JWT; user?: NextAuthUser | null }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }: { session: any; token: JWT }) {
+      if (token?.id && session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
   },
   pages: {
     signIn: '/login',

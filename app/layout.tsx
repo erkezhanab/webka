@@ -1,22 +1,24 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Manrope, Space_Grotesk } from 'next/font/google';
+import './globals.css';
 import AuthProvider from './components/SessionProvider';
 import Header from './components/Header';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const manrope = Manrope({
+  variable: '--font-manrope',
+  subsets: ['latin'],
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const spaceGrotesk = Space_Grotesk({
+  variable: '--font-space-grotesk',
+  subsets: ['latin'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: "News Portal",
-  description: "A web portal for publishing news and articles",
+  title: 'NewsHub',
+  description: 'Modern publishing platform for stories, insights, and community-driven articles.',
 };
 
 export default function RootLayout({
@@ -25,16 +27,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
+      <body>
         <AuthProvider>
-          <Header />
-          <main className="flex-1 container mx-auto p-4">
-            {children}
-          </main>
+          <div className="site-shell">
+            <Header />
+            <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+              {children}
+            </main>
+          </div>
         </AuthProvider>
       </body>
     </html>
